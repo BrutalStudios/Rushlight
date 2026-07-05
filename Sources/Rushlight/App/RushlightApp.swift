@@ -13,6 +13,7 @@ struct RushlightApp: App {
                 .environmentObject(model.playlist)
                 .environmentObject(model.lutLibrary)
                 .environmentObject(model.player)
+                .environmentObject(model.classifications)
                 .preferredColorScheme(.dark)
                 .frame(minWidth: 900, minHeight: 540)
         }

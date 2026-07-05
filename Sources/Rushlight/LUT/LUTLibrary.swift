@@ -84,11 +84,21 @@ final class LUTLibrary: ObservableObject {
         }
     }
 
+    /// When on, the LUT only touches clips detected as log footage; normal
+    /// and HDR videos play untouched.
+    @Published var autoDetectLog: Bool {
+        didSet {
+            defaults.set(autoDetectLog, forKey: Keys.autoDetect)
+            apply()
+        }
+    }
+
     private enum Keys {
         static let selected = "lut.selected"
         static let enabled = "lut.enabled"
         static let intensity = "lut.intensity"
         static let colorSpace = "lut.colorSpace"
+        static let autoDetect = "lut.autoDetect"
     }
 
     static let noneID = "none"
@@ -108,6 +118,7 @@ final class LUTLibrary: ObservableObject {
         isEnabled = defaults.object(forKey: Keys.enabled) as? Bool ?? true
         intensity = defaults.object(forKey: Keys.intensity) as? Double ?? 1.0
         colorSpaceOption = LUTColorSpaceOption(rawValue: defaults.string(forKey: Keys.colorSpace) ?? "") ?? .auto
+        autoDetectLog = defaults.object(forKey: Keys.autoDetect) as? Bool ?? true
 
         reload()
         apply()
@@ -205,11 +216,13 @@ final class LUTLibrary: ObservableObject {
         let enabled = isEnabled
         let amount = Float(intensity)
         let cs = colorSpaceOption.colorSpace
+        let autoDetect = autoDetectLog
         LUTEngine.shared.update { state in
             state.cube = cube
             state.isEnabled = enabled
             state.intensity = amount
             state.colorSpaceOverride = cs
+            state.autoDetectLog = autoDetect
         }
     }
 }

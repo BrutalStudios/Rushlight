@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -9,12 +10,24 @@ final class AppModel: ObservableObject {
     let playlist: Playlist
     let lutLibrary: LUTLibrary
     let player: PlayerController
+    let classifications: ClassificationStore
+
+    private var cancellables = Set<AnyCancellable>()
 
     private init() {
         playlist = Playlist()
+        classifications = ClassificationStore()
         lutLibrary = LUTLibrary()
-        player = PlayerController(playlist: playlist)
+        player = PlayerController(playlist: playlist, classifications: classifications)
         KeyboardShortcuts.install()
+
+        // Classify clips in the background as they enter the playlist so the
+        // sidebar badges and LUT skipping are ready before they're played.
+        playlist.$items
+            .sink { [weak self] items in
+                self?.classifications.classifyMissing(items.map(\.url))
+            }
+            .store(in: &cancellables)
     }
 
     /// Adds files/folders to the playlist; starts playing the first new clip

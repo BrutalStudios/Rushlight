@@ -6,6 +6,7 @@ struct ContentView: View {
     @EnvironmentObject private var playlist: Playlist
     @EnvironmentObject private var player: PlayerController
     @EnvironmentObject private var lut: LUTLibrary
+    @EnvironmentObject private var classifications: ClassificationStore
 
     @State private var isDropTargeted = false
 
@@ -55,11 +56,42 @@ struct ContentView: View {
                         .padding(10)
                         .background(Color.accentColor.opacity(0.08))
                 }
+                if let notice = lutSkipNotice {
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Spacer()
+                            Text(notice)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 5)
+                                .background(Capsule().fill(.black.opacity(0.55)))
+                                .padding(12)
+                        }
+                    }
+                    .allowsHitTesting(false)
+                }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             TransportBar()
         }
         .background(Color.black)
+    }
+
+    /// Explains why the current clip plays ungraded, so an enabled LUT that
+    /// "does nothing" is never a mystery.
+    private var lutSkipNotice: String? {
+        guard lut.isEnabled, let url = player.currentURL else { return nil }
+        if classifications.override(for: url) == false {
+            return "LUT off for this clip (manual)"
+        }
+        guard classifications.override(for: url) == nil, lut.autoDetectLog else { return nil }
+        switch classifications.kind(for: url) {
+        case .sdr: return "Normal video — LUT skipped"
+        case .hdr: return "HDR video — LUT skipped"
+        default: return nil
+        }
     }
 
     private var dropHint: some View {
@@ -122,6 +154,18 @@ struct ContentView: View {
 
             Button("Import LUTs… (⌘⇧L)") {
                 model.showImportLUTPanel()
+            }
+
+            Divider()
+
+            Button {
+                lut.autoDetectLog.toggle()
+            } label: {
+                if lut.autoDetectLog {
+                    Label("Only Grade Log Footage (Auto-Detect)", systemImage: "checkmark")
+                } else {
+                    Text("Only Grade Log Footage (Auto-Detect)")
+                }
             }
 
             Menu("LUT Input Color Space") {

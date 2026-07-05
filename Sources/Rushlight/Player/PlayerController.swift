@@ -12,6 +12,7 @@ import Foundation
 final class PlayerController: ObservableObject {
     let player = AVQueuePlayer()
     private let playlist: Playlist
+    private let classifications: ClassificationStore
 
     @Published private(set) var currentURL: URL?
     @Published private(set) var isPlaying = false
@@ -54,8 +55,9 @@ final class PlayerController: ObservableObject {
     private var cacheOrder: [URL] = []
     private let cacheLimit = 24
 
-    init(playlist: Playlist) {
+    init(playlist: Playlist, classifications: ClassificationStore) {
         self.playlist = playlist
+        self.classifications = classifications
 
         let defaults = UserDefaults.standard
         let savedRate = defaults.float(forKey: Keys.rate)
@@ -334,12 +336,16 @@ final class PlayerController: ObservableObject {
         }
 
         let assetColorSpace = await Self.detectColorSpace(of: videoTracks[0])
+        // Make sure the log/normal verdict is known before the first frame
+        // renders; the handler then reads live state per frame.
+        _ = await classifications.classification(for: url)
         let composition = try? await AVMutableVideoComposition.videoComposition(
             with: asset
         ) { request in
             let output = LUTEngine.shared.process(
                 request.sourceImage,
-                assetColorSpace: assetColorSpace
+                assetColorSpace: assetColorSpace,
+                clipURL: url
             )
             request.finish(with: output, context: LUTEngine.renderContext)
         }

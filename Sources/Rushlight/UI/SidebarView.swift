@@ -4,6 +4,7 @@ import SwiftUI
 struct SidebarView: View {
     @EnvironmentObject private var playlist: Playlist
     @EnvironmentObject private var player: PlayerController
+    @EnvironmentObject private var classifications: ClassificationStore
 
     var body: some View {
         VStack(spacing: 0) {
@@ -43,7 +44,9 @@ struct SidebarView: View {
                         meta: playlist.meta[item.url],
                         position: index + 1,
                         isCurrent: playlist.currentIndex == index,
-                        isPlaying: player.isPlaying && playlist.currentIndex == index
+                        isPlaying: player.isPlaying && playlist.currentIndex == index,
+                        kind: classifications.kind(for: item.url),
+                        lutOverride: classifications.override(for: item.url)
                     )
                     .contentShape(Rectangle())
                     .onTapGesture {
@@ -53,6 +56,11 @@ struct SidebarView: View {
                         Button("Play") { player.play(at: index) }
                         Button("Reveal in Finder") {
                             NSWorkspace.shared.activateFileViewerSelecting([item.url])
+                        }
+                        Menu("Apply LUT") {
+                            overrideButton("Automatic (detect log)", value: nil, url: item.url)
+                            overrideButton("Always", value: true, url: item.url)
+                            overrideButton("Never", value: false, url: item.url)
                         }
                         Divider()
                         Button("Remove from Playlist", role: .destructive) {
@@ -102,6 +110,19 @@ struct SidebarView: View {
         let size = Format.fileSize(playlist.totalSizeBytes)
         return "\(count) clip\(count == 1 ? "" : "s") · \(size)"
     }
+
+    @ViewBuilder
+    private func overrideButton(_ title: String, value: Bool?, url: URL) -> some View {
+        Button {
+            classifications.setOverride(value, for: url)
+        } label: {
+            if classifications.override(for: url) == value {
+                Label(title, systemImage: "checkmark")
+            } else {
+                Text(title)
+            }
+        }
+    }
 }
 
 private struct ClipRow: View {
@@ -110,6 +131,8 @@ private struct ClipRow: View {
     let position: Int
     let isCurrent: Bool
     let isPlaying: Bool
+    let kind: ContentKind?
+    let lutOverride: Bool?
 
     var body: some View {
         HStack(spacing: 10) {
@@ -137,10 +160,40 @@ private struct ClipRow: View {
                     .foregroundStyle(isCurrent ? Color.accentColor : Color.primary)
                     .lineLimit(1)
                     .truncationMode(.middle)
-                Text(Format.clipDetails(meta, sizeBytes: item.sizeBytes))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                HStack(spacing: 5) {
+                    if let badge = kind?.badge {
+                        Text(badge)
+                            .font(.system(size: 8.5, weight: .bold))
+                            .padding(.horizontal, 4)
+                            .padding(.vertical, 1)
+                            .background(
+                                Capsule().fill(
+                                    kind == .log
+                                        ? Color.orange.opacity(0.25)
+                                        : Color.purple.opacity(0.25)
+                                )
+                            )
+                            .foregroundStyle(kind == .log ? Color.orange : Color.purple)
+                    }
+                    if let lutOverride {
+                        Image(systemName: "camera.filters")
+                            .font(.system(size: 9))
+                            .foregroundStyle(lutOverride ? Color.orange : Color.secondary)
+                            .opacity(lutOverride ? 1 : 0.5)
+                            .overlay {
+                                if !lutOverride {
+                                    Image(systemName: "line.diagonal")
+                                        .font(.system(size: 10, weight: .bold))
+                                        .foregroundStyle(Color.secondary)
+                                }
+                            }
+                            .help(lutOverride ? "LUT forced on" : "LUT forced off")
+                    }
+                    Text(Format.clipDetails(meta, sizeBytes: item.sizeBytes))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
             }
             Spacer(minLength: 0)
         }
