@@ -1,8 +1,12 @@
-.PHONY: app run test icon clean
+.PHONY: app run test icon dmg clean
 
 # Build Rushlight.app into ./build
 app:
 	bash Scripts/build_app.sh
+
+# Build a distributable universal DMG into ./build
+dmg:
+	bash Scripts/make_dmg.sh
 
 # Build and launch the app
 run: app

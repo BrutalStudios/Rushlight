@@ -34,7 +34,14 @@ Log footage (D-Log M, S-Log3, V-Log, Apple Log, …) looks flat and gray in ever
 | `⌘O` | Open videos or folder |
 | `⌘⇧L` | Import LUTs |
 
-## Building
+## Install
+
+Grab the latest DMG from [**Releases**](https://github.com/BrutalStudios/Rushlight/releases), open it, and drag **Rushlight** into **Applications**. The binary is universal (Apple Silicon + Intel) and needs macOS 14 Sonoma or newer.
+
+> **First launch:** the app is open-source and not notarized with Apple, so macOS will warn you. Right-click the app → **Open** → **Open** (needed only once), or clear the quarantine flag with:
+> `xattr -dr com.apple.quarantine /Applications/Rushlight.app`
+
+## Building from source
 
 Requires macOS 14+ and Xcode (or the Swift 5.9+ toolchain).
 
@@ -42,6 +49,7 @@ Requires macOS 14+ and Xcode (or the Swift 5.9+ toolchain).
 make app      # builds build/Rushlight.app
 make run      # builds and launches it
 make test     # runs the unit tests
+make dmg      # builds a distributable universal DMG
 ```
 
 Drag `build/Rushlight.app` to `/Applications` if you want it around permanently. `bash Scripts/build_app.sh --universal` produces an Intel+Apple Silicon binary.
