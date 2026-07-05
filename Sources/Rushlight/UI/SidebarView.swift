@@ -5,6 +5,7 @@ struct SidebarView: View {
     @EnvironmentObject private var playlist: Playlist
     @EnvironmentObject private var player: PlayerController
     @EnvironmentObject private var classifications: ClassificationStore
+    @EnvironmentObject private var exporter: ExportManager
 
     var body: some View {
         VStack(spacing: 0) {
@@ -62,6 +63,10 @@ struct SidebarView: View {
                             overrideButton("Always", value: true, url: item.url)
                             overrideButton("Never", value: false, url: item.url)
                         }
+                        Button("Export with LUT…") {
+                            exporter.beginConfiguration(urls: [item.url])
+                        }
+                        .disabled(exporter.isExporting)
                         Divider()
                         Button("Remove from Playlist", role: .destructive) {
                             playlist.remove(at: IndexSet(integer: index))

@@ -73,19 +73,51 @@ final class LUTEngine {
         let colorSpace = s.colorSpaceOverride
             ?? assetColorSpace
             ?? CGColorSpace(name: CGColorSpace.itur_709)!
+        return Self.applyCube(to: source, cube: cube, colorSpace: colorSpace, intensity: s.intensity)
+    }
 
+    private static func applyCube(
+        to source: CIImage, cube: CubeLUT, colorSpace: CGColorSpace, intensity: Float
+    ) -> CIImage {
         var output = source.applyingFilter("CIColorCubeWithColorSpace", parameters: [
             "inputCubeDimension": NSNumber(value: cube.size),
             "inputCubeData": cube.data,
             "inputColorSpace": colorSpace,
         ])
-
-        if s.intensity < 0.999 {
+        if intensity < 0.999 {
             output = output.applyingFilter("CIMix", parameters: [
                 kCIInputBackgroundImageKey: source,
-                kCIInputAmountKey: NSNumber(value: s.intensity),
+                kCIInputAmountKey: NSNumber(value: intensity),
             ])
         }
         return output
+    }
+
+    /// Whether the LUT would currently touch this clip (enabled, a cube is
+    /// selected, and the clip isn't skipped by auto-detection or an override).
+    func wouldApply(to clipURL: URL) -> Bool {
+        let s = snapshot()
+        guard s.isEnabled, s.cube != nil, s.intensity > 0.001 else { return false }
+        if let forced = s.clipOverrides[clipURL] { return forced }
+        if s.autoDetectLog, s.classifiedClips.contains(clipURL), !s.logClips.contains(clipURL) {
+            return false
+        }
+        return true
+    }
+
+    /// Captures the current LUT state into a self-contained per-frame filter
+    /// for export, so a deterministic look is baked in even if the user
+    /// changes LUT settings while the export runs. Returns nil when the LUT
+    /// would not be applied to this clip (export becomes a plain transcode).
+    func frozenFilter(for clipURL: URL, assetColorSpace: CGColorSpace?) -> ((CIImage) -> CIImage)? {
+        let s = snapshot()
+        guard wouldApply(to: clipURL), let cube = s.cube else { return nil }
+        let colorSpace = s.colorSpaceOverride
+            ?? assetColorSpace
+            ?? CGColorSpace(name: CGColorSpace.itur_709)!
+        let intensity = s.intensity
+        return { source in
+            Self.applyCube(to: source, cube: cube, colorSpace: colorSpace, intensity: intensity)
+        }
     }
 }

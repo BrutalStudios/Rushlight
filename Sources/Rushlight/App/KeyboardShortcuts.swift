@@ -9,6 +9,8 @@ import AppKit
 ///   , / .        step one frame back / forward (while paused)
 ///   L            toggle LUT on/off (instant A/B compare)
 ///   F            toggle fullscreen
+///   E            export current clip with LUT
+///   S            save current frame as PNG
 ///   [ / ]        playback speed down / up
 @MainActor
 enum KeyboardShortcuts {
@@ -62,6 +64,12 @@ enum KeyboardShortcuts {
             return true
         case "f":
             player.toggleFullscreen()
+            return true
+        case "e":
+            model.exportCurrentClip()
+            return true
+        case "s":
+            model.saveCurrentFrame()
             return true
         case ",":
             player.stepFrames(-1)

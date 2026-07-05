@@ -17,6 +17,8 @@ Log footage (D-Log M, S-Log3, V-Log, Apple Log, …) looks flat and gray in ever
 - **Built-in D-Log M → Rec.709 approximation** so footage is watchable out of the box. For exact colors, import DJI's official *DLog-M to Rec.709* LUT (free from the [DJI Downloads](https://www.dji.com/downloads) page for your camera) via **⌘⇧L**.
 - **Any camera, not just DJI** — import as many `.cube` LUTs as you like (Sony S-Log, Panasonic V-Log, Canon C-Log, Apple Log…), switch between them from the toolbar, and set the LUT input color space (auto-detected from the footage by default, including HLG/PQ).
 - **LUT intensity slider** and instant **L** on/off toggle for before/after comparison.
+- **Export with the LUT baked in** — press **E** (or right-click a clip, or *File → Export All Clips*) to render clips to HEVC, H.264, or ProRes 422 with the current look burned in. Exports run in the background with progress and cancel while you keep watching; clips where the LUT is skipped export as clean transcodes. The look is frozen per clip at export start, so changing LUT settings mid-export can't corrupt the output.
+- **Save the current frame as PNG** (**S**) — with the LUT applied exactly as shown, for thumbnails and grading references.
 - **Review-friendly transport** — frame stepping, 0.5×–2× speed, precise scrubbing, loop, fullscreen.
 - Playlist, selected LUT, and settings persist between launches.
 
@@ -30,6 +32,8 @@ Log footage (D-Log M, S-Log3, V-Log, Apple Log, …) looks flat and gray in ever
 | `.` / `,` | Step one frame forward / back |
 | `L` | Toggle LUT on/off |
 | `F` | Fullscreen |
+| `E` | Export current clip with LUT (`⌘⇧E` exports all) |
+| `S` | Save current frame as PNG |
 | `]` / `[` | Speed up / down |
 | `⌘O` | Open videos or folder |
 | `⌘⇧L` | Import LUTs |

@@ -17,6 +17,23 @@ struct AppCommands: Commands {
 
             Divider()
 
+            Button("Export Clip with LUT…") {
+                model.exportCurrentClip()
+            }
+            .keyboardShortcut("e", modifiers: .command)
+
+            Button("Export All Clips with LUT…") {
+                model.exportAllClips()
+            }
+            .keyboardShortcut("e", modifiers: [.command, .shift])
+
+            Button("Save Current Frame…") {
+                model.saveCurrentFrame()
+            }
+            .keyboardShortcut("s", modifiers: [.command, .option])
+
+            Divider()
+
             Button("Clear Playlist") {
                 model.playlist.removeAll()
             }

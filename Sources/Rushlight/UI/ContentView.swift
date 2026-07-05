@@ -7,6 +7,7 @@ struct ContentView: View {
     @EnvironmentObject private var player: PlayerController
     @EnvironmentObject private var lut: LUTLibrary
     @EnvironmentObject private var classifications: ClassificationStore
+    @EnvironmentObject private var exporter: ExportManager
 
     @State private var isDropTargeted = false
 
@@ -21,6 +22,14 @@ struct ContentView: View {
         .onDrop(of: [.fileURL], isTargeted: $isDropTargeted) { providers in
             handleDrop(providers)
         }
+        .sheet(
+            isPresented: Binding(
+                get: { exporter.config != nil },
+                set: { if !$0 { exporter.cancelConfiguration() } }
+            )
+        ) {
+            ExportSheet()
+        }
         .alert(
             "LUT Error",
             isPresented: Binding(
@@ -31,6 +40,17 @@ struct ContentView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(lut.lastError ?? "")
+        }
+        .alert(
+            "Export Error",
+            isPresented: Binding(
+                get: { exporter.lastError != nil },
+                set: { if !$0 { exporter.lastError = nil } }
+            )
+        ) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(exporter.lastError ?? "")
         }
     }
 
@@ -74,6 +94,7 @@ struct ContentView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            ExportStatusStrip()
             TransportBar()
         }
         .background(Color.black)
@@ -117,6 +138,14 @@ struct ContentView: View {
                 Label("Open", systemImage: "folder.badge.plus")
             }
             .help("Add videos or folders (⌘O)")
+
+            Button {
+                model.exportCurrentClip()
+            } label: {
+                Label("Export", systemImage: "square.and.arrow.up")
+            }
+            .disabled(player.currentURL == nil || exporter.isExporting)
+            .help("Export this clip with the LUT baked in (E)")
 
             lutMenu
 

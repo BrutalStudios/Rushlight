@@ -11,6 +11,7 @@ final class AppModel: ObservableObject {
     let lutLibrary: LUTLibrary
     let player: PlayerController
     let classifications: ClassificationStore
+    let exporter: ExportManager
 
     private var cancellables = Set<AnyCancellable>()
 
@@ -19,6 +20,7 @@ final class AppModel: ObservableObject {
         classifications = ClassificationStore()
         lutLibrary = LUTLibrary()
         player = PlayerController(playlist: playlist, classifications: classifications)
+        exporter = ExportManager(classifications: classifications)
         KeyboardShortcuts.install()
 
         // Classify clips in the background as they enter the playlist so the
@@ -51,6 +53,21 @@ final class AppModel: ObservableObject {
             let urls = panel.urls
             Task { @MainActor in self?.open(urls: urls) }
         }
+    }
+
+    func exportCurrentClip() {
+        guard let url = player.currentURL else { return }
+        exporter.beginConfiguration(urls: [url])
+    }
+
+    func exportAllClips() {
+        exporter.beginConfiguration(urls: playlist.items.map(\.url))
+    }
+
+    func saveCurrentFrame() {
+        guard let url = player.currentURL else { return }
+        player.player.pause()
+        exporter.saveFrame(of: url, at: player.currentTime)
     }
 
     func showImportLUTPanel() {
